@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package clinic.v1;
+
+option java_multiple_files = true;
+option java_package = "com.clinic.v1";
+option csharp_namespace = "Clinic.V1";
+
+message PatientSummaryRequest {
+  string patient_id = 1;
+}
+
+message AllergyInfo {
+  string code = 1;
+  string label = 2;
+  bool is_critical = 3;
+}
+
+message PatientSummaryResponse {
+  string patient_id = 1;
+  bool has_record = 2;
+  repeated AllergyInfo allergies = 3;
+  string last_visit_at = 4;
+}
+
+service MedicalRecordService {
+  rpc GetPatientSummary(PatientSummaryRequest) returns (PatientSummaryResponse);
+}

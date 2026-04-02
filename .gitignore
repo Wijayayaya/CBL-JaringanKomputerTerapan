@@ -1,0 +1,22 @@
+# General
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+
+# Node
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/

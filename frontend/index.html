@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clinic Registration</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="panel">
+        <h1>Patient Registration</h1>
+        <p>Input data pasien dan kirim ke Service A.</p>
+
+        <form id="registration-form">
+          <label>Name</label>
+          <input name="name" required />
+
+          <label>Date of Birth</label>
+          <input name="dateOfBirth" type="date" required />
+
+          <label>Gender</label>
+          <select name="gender" required>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+
+          <label>Visit Date</label>
+          <input name="visitDate" type="date" required />
+
+          <label>Clinic Code</label>
+          <input name="clinicCode" required value="GEN" />
+
+          <label class="checkbox">
+            <input name="requireRealtimeValidation" type="checkbox" />
+            Need realtime validation via gRPC
+          </label>
+
+          <button type="submit">Submit Registration</button>
+        </form>
+
+        <pre id="result"></pre>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

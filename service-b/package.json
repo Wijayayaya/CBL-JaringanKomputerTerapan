@@ -1,0 +1,19 @@
+{
+  "name": "clinic-service-b",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Service B - Medical Record",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.11.3",
+    "@grpc/proto-loader": "^0.7.13",
+    "amqplib": "^0.10.4",
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.0",
+    "uuid": "^11.0.3"
+  }
+}

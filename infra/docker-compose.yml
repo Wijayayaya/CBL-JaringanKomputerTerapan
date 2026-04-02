@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: clinic-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  db-service-a:
+    image: postgres:16
+    container_name: clinic-db-service-a
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: service_a
+      POSTGRES_PASSWORD: service_a_pass
+      POSTGRES_DB: registration_db
+    volumes:
+      - db_service_a_data:/var/lib/postgresql/data
+
+  db-service-b:
+    image: postgres:16
+    container_name: clinic-db-service-b
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: service_b
+      POSTGRES_PASSWORD: service_b_pass
+      POSTGRES_DB: medical_record_db
+    volumes:
+      - db_service_b_data:/var/lib/postgresql/data
+
+volumes:
+  db_service_a_data:
+  db_service_b_data:
