@@ -46,13 +46,7 @@ async function startConsumer() {
   const conn = await amqp.connect(config.rabbit.url);
   const channel = await conn.createChannel();
 
-  await channel.assertQueue(config.rabbit.dlq, { durable: true });
-  await channel.assertQueue(config.rabbit.queue, {
-    durable: true,
-    arguments: {
-      "x-dead-letter-routing-key": config.rabbit.dlq
-    }
-  });
+  await channel.assertQueue(config.rabbit.queue, { durable: true });
 
   await channel.prefetch(10);
 
