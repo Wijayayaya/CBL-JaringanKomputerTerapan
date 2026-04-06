@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS medical_records (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE medical_records ADD COLUMN IF NOT EXISTS patient_name TEXT;
+ALTER TABLE medical_records ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE medical_records ADD COLUMN IF NOT EXISTS diagnosis TEXT;
+
 CREATE TABLE IF NOT EXISTS allergies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id UUID NOT NULL,
@@ -21,6 +25,19 @@ CREATE TABLE IF NOT EXISTS allergies (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (patient_id, code)
 );
+
+ALTER TABLE allergies ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'allergies_patient_id_code_key'
+  ) THEN
+    ALTER TABLE allergies
+      ADD CONSTRAINT allergies_patient_id_code_key UNIQUE (patient_id, code);
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS visit_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

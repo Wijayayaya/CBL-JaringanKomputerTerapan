@@ -3,8 +3,13 @@ const config = require("./config");
 
 let channel = null;
 let isConnecting = false;
+let isReady = false;
+let reconnectTimer = null;
 
 async function connectRabbit() {
+  if (channel && isReady) {
+    return { channel };
+  }
   if (isConnecting) return;
   isConnecting = true;
 
@@ -15,20 +20,42 @@ async function connectRabbit() {
       conn.on("error", (err) => {
         console.error("[rabbit] connection error", err.message);
         channel = null;
+        isReady = false;
         scheduleReconnect();
       });
 
       conn.on("close", () => {
         console.warn("[rabbit] connection closed, reconnecting...");
         channel = null;
+        isReady = false;
         scheduleReconnect();
       });
 
       channel = await conn.createChannel();
-      // Tidak assertQueue di sini — Service B yang bertanggung jawab
-      // declare queue lengkap dengan DLX
+
+      channel.on("close", () => {
+        channel = null;
+        isReady = false;
+      });
+
+      channel.on("error", (err) => {
+        console.error("[rabbit] channel error", err.message);
+      });
+
+      await channel.assertExchange(config.rabbit.dlx, "direct", { durable: true });
+      await channel.assertQueue(config.rabbit.dlq, { durable: true });
+      await channel.bindQueue(config.rabbit.dlq, config.rabbit.dlx, config.rabbit.queue);
+
+      await channel.assertQueue(config.rabbit.queue, {
+        durable: true,
+        arguments: {
+          "x-dead-letter-exchange": config.rabbit.dlx,
+          "x-dead-letter-routing-key": config.rabbit.queue,
+        },
+      });
 
       console.log("[rabbit] connected and channel ready");
+      isReady = true;
       isConnecting = false;
       return { conn, channel };
     } catch (err) {
@@ -39,10 +66,9 @@ async function connectRabbit() {
 }
 
 function scheduleReconnect() {
-  if (isConnecting) return;
-  isConnecting = true;
-  setTimeout(() => {
-    isConnecting = false;
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
     connectRabbit().catch((err) => {
       console.error("[rabbit] reconnect error", err.message);
     });

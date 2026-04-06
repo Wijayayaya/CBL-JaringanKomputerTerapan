@@ -51,7 +51,7 @@ document.getElementById('reg-form').addEventListener('submit', async (e) => {
     gender: fd.get('gender'),
     visitDate: fd.get('visitDate'),
     clinicCode: fd.get('clinicCode'),
-    requireRealtimeValidation: fd.get('requireRealtimeValidation') === 'on'
+      requireRealtimeValidation: true
   };
 
   const resultBox = document.getElementById('reg-result');
@@ -143,7 +143,7 @@ async function loadPatients() {
           </thead>
           <tbody>
             ${patients.map((p, i) => `
-              <tr onclick="goToRecordByPatient('${p.id}', '${escHtml(p.name)}')">
+              <tr onclick="goToRecordByPatient('${escJsString(p.id)}', '${escJsString(p.name)}')">
                 <td style="color:var(--ink-soft);font-size:0.8rem">${i + 1}</td>
                 <td>
                   <div class="name-cell">${escHtml(p.name)}</div>
@@ -154,7 +154,7 @@ async function loadPatients() {
                 <td style="font-size:0.83rem">${p.visit_date ? fmtDate(p.visit_date) : '<span style="color:var(--ink-soft)">—</span>'}</td>
                 <td>${p.clinic_code ? `<span class="clinic-badge">${escHtml(p.clinic_code)}</span>` : '—'}</td>
                 <td style="font-size:0.78rem;color:var(--ink-soft)">${fmtDateTime(p.created_at)}</td>
-                <td><button class="action-btn" onclick="event.stopPropagation();goToRecordByPatient('${p.id}','${escHtml(p.name)}')">Rekam</button></td>
+                <td><button class="action-btn" onclick="event.stopPropagation();goToRecordByPatient('${escJsString(p.id)}','${escJsString(p.name)}')">Rekam</button></td>
               </tr>
             `).join('')}
           </tbody>
@@ -280,7 +280,7 @@ async function loadRecords() {
               const pillClass = { draft: 'pill-draft', active: 'pill-active', archived: 'pill-archived' }[r.status] || 'pill-draft';
               const statusLabel = { draft: '⏳ Draft', active: '✅ Aktif', archived: '📁 Arsip' }[r.status] || r.status;
               return `
-              <tr onclick="goToRecordByPatient('${r.patient_id}', '${escHtml(r.patient_name || '')}')">
+                <tr onclick="goToRecordByPatient('${escJsString(r.patient_id)}', '${escJsString(r.patient_name || '')}')">
                 <td style="color:var(--ink-soft);font-size:0.8rem">${i + 1}</td>
                 <td>
                   <div class="name-cell">${escHtml(r.patient_name || '—')}</div>
@@ -290,7 +290,7 @@ async function loadRecords() {
                 <td style="font-size:0.85rem">${fmtDateTime(r.last_visit_at)}</td>
                 <td style="font-size:0.8rem;color:var(--ink-soft)">${fmtDateTime(r.created_at)}</td>
                 <td style="font-size:0.8rem;color:var(--ink-soft)">${fmtDateTime(r.updated_at)}</td>
-                <td><button class="action-btn" onclick="event.stopPropagation();goToRecordByPatient('${r.patient_id}','${escHtml(r.patient_name || '')}')">Detail</button></td>
+                  <td><button class="action-btn" onclick="event.stopPropagation();goToRecordByPatient('${escJsString(r.patient_id)}','${escJsString(r.patient_name || '')}')">Detail</button></td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -424,7 +424,22 @@ document.getElementById('pid-input').addEventListener('keydown', (e) => {
 // ── HELPER ──
 function escHtml(str) {
   if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function escJsString(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
+    .replace(/</g, "\\x3C");
 }
 
 // Default visit date = hari ini

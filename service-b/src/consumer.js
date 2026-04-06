@@ -2,6 +2,10 @@ const amqp = require("amqplib");
 const config = require("./config");
 const { pool } = require("./db");
 
+let isStarting = false;
+let isRunning = false;
+let reconnectTimer = null;
+
 async function processRegisteredEvent(payload) {
   const client = await pool.connect();
   try {
@@ -47,6 +51,12 @@ async function processRegisteredEvent(payload) {
 }
 
 async function startConsumer() {
+  if (isStarting || isRunning) {
+    return;
+  }
+
+  isStarting = true;
+
   while (true) {
     try {
       const conn = await amqp.connect(config.rabbit.url);
@@ -56,8 +66,9 @@ async function startConsumer() {
       });
 
       conn.on("close", () => {
+        isRunning = false;
         console.warn("[consumer] connection closed, reconnecting in 5s...");
-        setTimeout(() => startConsumer(), 5000);
+        scheduleReconnect();
       });
 
       const channel = await conn.createChannel();
@@ -89,12 +100,27 @@ async function startConsumer() {
       });
 
       console.log(`[consumer] consuming queue "${config.rabbit.queue}", DLQ: "${config.rabbit.dlq}"`);
+      isStarting = false;
+      isRunning = true;
       return;
     } catch (err) {
       console.error("[consumer] failed to connect, retrying in 5s...", err.message);
       await sleep(5000);
     }
   }
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) {
+    return;
+  }
+
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    startConsumer().catch((err) => {
+      console.error("[consumer] reconnect error", err.message);
+    });
+  }, 5000);
 }
 
 function sleep(ms) {

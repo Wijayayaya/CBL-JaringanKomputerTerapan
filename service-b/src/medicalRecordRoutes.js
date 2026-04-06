@@ -2,6 +2,11 @@ const express = require("express");
 const { pool } = require("./db");
 
 const router = express.Router();
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value) {
+  return UUID_REGEX.test(String(value || ""));
+}
 
 // GET /medical-records — list semua rekam medis
 router.get("/", async (_req, res) => {
@@ -20,6 +25,10 @@ router.get("/", async (_req, res) => {
 // GET /medical-records/:patientId
 router.get("/:patientId", async (req, res) => {
   const { patientId } = req.params;
+  if (!isUuid(patientId)) {
+    return res.status(400).json({ message: "Invalid patientId format" });
+  }
+
   try {
     const recordRes = await pool.query(
       `SELECT id, patient_id, patient_name, status, notes, diagnosis, last_visit_at, created_at, updated_at
@@ -56,6 +65,10 @@ router.get("/:patientId", async (req, res) => {
 // PATCH /medical-records/:patientId
 router.patch("/:patientId", async (req, res) => {
   const { patientId } = req.params;
+  if (!isUuid(patientId)) {
+    return res.status(400).json({ message: "Invalid patientId format" });
+  }
+
   const { notes, diagnosis, status } = req.body;
 
   const allowedStatus = ["draft", "active", "archived"];
@@ -81,6 +94,10 @@ router.patch("/:patientId", async (req, res) => {
 // POST /medical-records/:patientId/allergies
 router.post("/:patientId/allergies", async (req, res) => {
   const { patientId } = req.params;
+  if (!isUuid(patientId)) {
+    return res.status(400).json({ message: "Invalid patientId format" });
+  }
+
   const { code, label, is_critical } = req.body;
   if (!code || !label) return res.status(400).json({ message: "code and label are required" });
   try {
@@ -101,6 +118,13 @@ router.post("/:patientId/allergies", async (req, res) => {
 // DELETE /medical-records/:patientId/allergies/:allergyId
 router.delete("/:patientId/allergies/:allergyId", async (req, res) => {
   const { patientId, allergyId } = req.params;
+  if (!isUuid(patientId)) {
+    return res.status(400).json({ message: "Invalid patientId format" });
+  }
+  if (!isUuid(allergyId)) {
+    return res.status(400).json({ message: "Invalid allergyId format" });
+  }
+
   try {
     const result = await pool.query(
       `DELETE FROM allergies WHERE id = $1 AND patient_id = $2 RETURNING id`,
@@ -116,12 +140,26 @@ router.delete("/:patientId/allergies/:allergyId", async (req, res) => {
 // POST /medical-records/:patientId/visits
 router.post("/:patientId/visits", async (req, res) => {
   const { patientId } = req.params;
+  if (!isUuid(patientId)) {
+    return res.status(400).json({ message: "Invalid patientId format" });
+  }
+
   const { visit_date, clinic_code, doctor_notes, diagnosis } = req.body;
   if (!visit_date || !clinic_code) return res.status(400).json({ message: "visit_date and clinic_code are required" });
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    const existingMedicalRecord = await client.query(
+      `SELECT patient_id FROM medical_records WHERE patient_id = $1 FOR UPDATE`,
+      [patientId]
+    );
+    if (existingMedicalRecord.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ message: "Medical record not found" });
+    }
+
     const visitResult = await client.query(
       `INSERT INTO visit_history (patient_id, visit_date, clinic_code, doctor_notes, diagnosis)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
@@ -130,7 +168,7 @@ router.post("/:patientId/visits", async (req, res) => {
     await client.query(
       `UPDATE medical_records SET last_visit_at = $1, status = 'active', updated_at = NOW()
        WHERE patient_id = $2`,
-      [visit_date, patientId]
+      [visitResult.rows[0].created_at, patientId]
     );
     await client.query("COMMIT");
     res.status(201).json(visitResult.rows[0]);
