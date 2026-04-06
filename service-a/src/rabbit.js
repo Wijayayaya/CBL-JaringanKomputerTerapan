@@ -2,20 +2,23 @@ const amqp = require("amqplib");
 const config = require("./config");
 
 let channel = null;
-let isConnecting = false;
 let isReady = false;
 let reconnectTimer = null;
+let connectPromise = null;
 
 async function connectRabbit() {
   if (channel && isReady) {
     return { channel };
   }
-  if (isConnecting) return;
-  isConnecting = true;
 
-  while (true) {
-    try {
-      const conn = await amqp.connect(config.rabbit.url);
+  if (connectPromise) {
+    return connectPromise;
+  }
+
+  connectPromise = (async () => {
+    while (true) {
+      try {
+        const conn = await amqp.connect(config.rabbit.url);
 
       conn.on("error", (err) => {
         console.error("[rabbit] connection error", err.message);
@@ -54,14 +57,20 @@ async function connectRabbit() {
         },
       });
 
-      console.log("[rabbit] connected and channel ready");
-      isReady = true;
-      isConnecting = false;
-      return { conn, channel };
-    } catch (err) {
-      console.error("[rabbit] failed to connect, retrying in 5s...", err.message);
-      await sleep(5000);
+        console.log("[rabbit] connected and channel ready");
+        isReady = true;
+        return { conn, channel };
+      } catch (err) {
+        console.error("[rabbit] failed to connect, retrying in 5s...", err.message);
+        await sleep(5000);
+      }
     }
+  })();
+
+  try {
+    return await connectPromise;
+  } finally {
+    connectPromise = null;
   }
 }
 

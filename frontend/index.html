@@ -1,127 +1,146 @@
 <!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Klinik — Sistem Pendaftaran</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/src/style.css" />
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Klinik — Sistem Pendaftaran</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <nav>
+      <div class="nav-brand">Klinik<span>.</span></div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-page="reg">📋 Pendaftaran</button>
+        <button class="nav-tab" data-page="patients">👥 Daftar Pasien</button>
+        <button class="nav-tab" data-page="records">🗂️ Daftar Rekam Medis</button>
+        <button class="nav-tab" data-page="rec">🏥 Detail Rekam Medis</button>
+      </div>
+    </nav>
 
-<nav>
-  <div class="nav-brand">Klinik<span>.</span></div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" data-page="reg">📋 Pendaftaran</button>
-    <button class="nav-tab" data-page="patients">👥 Daftar Pasien</button>
-    <button class="nav-tab" data-page="records">🗂️ Daftar Rekam Medis</button>
-    <button class="nav-tab" data-page="rec">🏥 Detail Rekam Medis</button>
-  </div>
-</nav>
+    <!-- PENDAFTARAN -->
+    <div class="page active" id="page-reg">
+      <div class="page-header">
+        <h1>Pendaftaran Pasien</h1>
+        <p>Isi data pasien untuk mendaftarkan kunjungan ke klinik.</p>
+      </div>
+      <div class="card">
+        <form id="reg-form">
+          <div class="form-grid">
+            <div class="field full">
+              <label>Nama Lengkap</label>
+              <input name="name" placeholder="contoh: Budi Santoso" required />
+            </div>
+            <div class="field">
+              <label>Tanggal Lahir</label>
+              <input name="dateOfBirth" type="date" required />
+            </div>
+            <div class="field">
+              <label>Jenis Kelamin</label>
+              <select name="gender" required>
+                <option value="M">Laki-laki</option>
+                <option value="F">Perempuan</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Tanggal Kunjungan</label>
+              <input name="visitDate" type="date" required />
+            </div>
+            <div class="field">
+              <label>Kode Klinik</label>
+              <input name="clinicCode" value="GEN" required />
+            </div>
+            <div class="field full">
+              <label>Diagnosis Awal</label>
+              <input name="diagnosis" placeholder="Contoh: Demam ringan" />
+            </div>
+            <div class="field full">
+              <label>Catatan Awal</label>
+              <textarea name="notes" rows="3" placeholder="Catatan tambahan saat pendaftaran..."></textarea>
+            </div>
+            <div class="field">
+              <label>Kode Alergi (opsional)</label>
+              <input name="allergyCode" placeholder="Contoh: PEN" />
+            </div>
+            <div class="field">
+              <label>Label Alergi (opsional)</label>
+              <input name="allergyLabel" placeholder="Contoh: Penicillin" />
+            </div>
+            <div class="field">
+              <label style="text-transform: none; letter-spacing: 0; font-size: 0.84rem"> <input name="allergyCritical" type="checkbox" style="margin-right: 6px" /> Alergi kritis </label>
+            </div>
+            <div class="field full">
+              <label>Diagnosis Kunjungan (opsional)</label>
+              <input name="visitDiagnosis" placeholder="Diagnosis untuk kunjungan hari ini" />
+            </div>
+            <div class="field full">
+              <label>Catatan Dokter (opsional)</label>
+              <textarea name="doctorNotes" rows="3" placeholder="Catatan dokter untuk kunjungan ini..."></textarea>
+            </div>
+          </div>
 
-<!-- PENDAFTARAN -->
-<div class="page active" id="page-reg">
-  <div class="page-header">
-    <h1>Pendaftaran Pasien</h1>
-    <p>Isi data pasien untuk mendaftarkan kunjungan ke klinik.</p>
-  </div>
-  <div class="card">
-    <form id="reg-form">
-      <div class="form-grid">
-        <div class="field full">
-          <label>Nama Lengkap</label>
-          <input name="name" placeholder="contoh: Budi Santoso" required />
+          <button type="submit" class="btn btn-primary" id="reg-btn">Daftarkan Pasien</button>
+        </form>
+
+        <div class="result-box" id="reg-result">
+          <div class="result-header success" id="reg-result-header">✓ Registrasi Berhasil</div>
+          <div class="result-body" id="reg-result-body"></div>
         </div>
-        <div class="field">
-          <label>Tanggal Lahir</label>
-          <input name="dateOfBirth" type="date" required />
-        </div>
-        <div class="field">
-          <label>Jenis Kelamin</label>
-          <select name="gender" required>
-            <option value="M">Laki-laki</option>
-            <option value="F">Perempuan</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Tanggal Kunjungan</label>
-          <input name="visitDate" type="date" required />
-        </div>
-        <div class="field">
-          <label>Kode Klinik</label>
-          <input name="clinicCode" value="GEN" required />
+
+        <button class="view-record-btn" id="view-record-btn">🏥 Lihat Rekam Medis Pasien Ini →</button>
+      </div>
+    </div>
+
+    <!-- DAFTAR PASIEN -->
+    <div class="page" id="page-patients">
+      <div class="page-header">
+        <h1>Daftar Pasien</h1>
+        <p>Semua pasien yang telah mendaftar di Service A.</p>
+      </div>
+      <div class="toolbar">
+        <div class="count-badge" id="patient-count">memuat...</div>
+        <button class="btn btn-refresh" onclick="loadPatients()">↻ Refresh</button>
+      </div>
+      <div id="patients-container">
+        <div class="loading">
+          <div class="spinner"></div>
+          Memuat data pasien...
         </div>
       </div>
+    </div>
 
-      <button type="submit" class="btn btn-primary" id="reg-btn">
-        Daftarkan Pasien
-      </button>
-    </form>
-
-    <div class="result-box" id="reg-result">
-      <div class="result-header success" id="reg-result-header">
-        ✓ Registrasi Berhasil
+    <!-- DAFTAR REKAM MEDIS -->
+    <div class="page" id="page-records">
+      <div class="page-header">
+        <h1>Daftar Rekam Medis</h1>
+        <p>Rekam medis di Service B.</p>
       </div>
-      <div class="result-body" id="reg-result-body"></div>
+      <div class="toolbar">
+        <div class="count-badge" id="record-count">memuat...</div>
+        <button class="btn btn-refresh" onclick="loadRecords()">↻ Refresh</button>
+      </div>
+      <div id="records-container">
+        <div class="loading">
+          <div class="spinner"></div>
+          Memuat rekam medis...
+        </div>
+      </div>
     </div>
 
-    <button class="view-record-btn" id="view-record-btn">
-      🏥 Lihat Rekam Medis Pasien Ini →
-    </button>
-  </div>
-</div>
-
-<!-- DAFTAR PASIEN -->
-<div class="page" id="page-patients">
-  <div class="page-header">
-    <h1>Daftar Pasien</h1>
-    <p>Semua pasien yang telah mendaftar di Service A.</p>
-  </div>
-  <div class="toolbar">
-    <div class="count-badge" id="patient-count">memuat...</div>
-    <button class="btn btn-refresh" onclick="loadPatients()">↻ Refresh</button>
-  </div>
-  <div id="patients-container">
-    <div class="loading">
-      <div class="spinner"></div>
-      Memuat data pasien...
+    <!-- DETAIL REKAM MEDIS -->
+    <div class="page" id="page-rec">
+      <div class="page-header">
+        <h1>Detail Rekam Medis</h1>
+        <p>Cari rekam medis pasien berdasarkan Patient ID.</p>
+      </div>
+      <div class="search-row">
+        <input id="pid-input" placeholder="Masukkan Patient ID (UUID)..." />
+        <button class="btn btn-primary" onclick="fetchRecord()">Cari</button>
+      </div>
+      <div id="record-container"></div>
     </div>
-  </div>
-</div>
 
-<!-- DAFTAR REKAM MEDIS -->
-<div class="page" id="page-records">
-  <div class="page-header">
-    <h1>Daftar Rekam Medis</h1>
-    <p>Rekam medis di Service B.</p>
-  </div>
-  <div class="toolbar">
-    <div class="count-badge" id="record-count">memuat...</div>
-    <button class="btn btn-refresh" onclick="loadRecords()">↻ Refresh</button>
-  </div>
-  <div id="records-container">
-    <div class="loading">
-      <div class="spinner"></div>
-      Memuat rekam medis...
-    </div>
-  </div>
-</div>
-
-<!-- DETAIL REKAM MEDIS -->
-<div class="page" id="page-rec">
-  <div class="page-header">
-    <h1>Detail Rekam Medis</h1>
-    <p>Cari rekam medis pasien berdasarkan Patient ID.</p>
-  </div>
-  <div class="search-row">
-    <input id="pid-input" placeholder="Masukkan Patient ID (UUID)..." />
-    <button class="btn btn-primary" onclick="fetchRecord()">Cari</button>
-  </div>
-  <div id="record-container"></div>
-</div>
-
-<div class="toast" id="toast"></div>
-<script type="module" src="/src/main.js"></script>
-
-</body>
+    <div class="toast" id="toast"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>

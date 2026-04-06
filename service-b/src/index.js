@@ -25,10 +25,14 @@ app.use("/medical-records", medicalRecordRoutes);
 async function bootstrap() {
   await runMigrations();
   startGrpcServer();
-  await startConsumer();
-
   app.listen(config.port, () => {
     console.log(`Service B HTTP listening on port ${config.port}`);
+  });
+
+  // Start consumer in background so HTTP health endpoint stays available
+  // even when RabbitMQ is temporarily unreachable.
+  startConsumer().catch((error) => {
+    console.error("Service B consumer failed to start", error);
   });
 }
 

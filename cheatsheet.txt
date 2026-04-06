@@ -38,6 +38,12 @@ RESET DATABASE (hapus data Postgres)
 docker compose down -v
 docker compose up -d --build
 
+Jika setelah reset muncul "dependency failed to start" karena db-service-a/db-service-b unhealthy:
+docker compose ps
+docker compose logs -f db-service-a db-service-b
+docker compose up -d db-service-a db-service-b
+docker compose up -d service-a service-b
+
 STATUS DAN LOG
 docker compose ps
 docker compose logs -f service-a
