@@ -14,7 +14,7 @@ form.addEventListener("submit", async (e) => {
     gender: formData.get("gender"),
     visitDate: formData.get("visitDate"),
     clinicCode: formData.get("clinicCode"),
-    requireRealtimeValidation: formData.get("requireRealtimeValidation") === "on"
+    requireRealtimeValidation: true
   };
 
   try {
@@ -27,6 +27,9 @@ form.addEventListener("submit", async (e) => {
     });
 
     const data = await res.json();
+    if (data.realtimeStatus === "queued") {
+      data.realtimeMessage = "waiting/queue: realtime validation akan diproses setelah Service B tersedia";
+    }
     result.textContent = JSON.stringify(data, null, 2);
   } catch (error) {
     result.textContent = `Request failed: ${error.message}`;
