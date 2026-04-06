@@ -8,6 +8,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db-service-a:
     image: postgres:16
@@ -20,6 +25,11 @@ services:
       POSTGRES_DB: registration_db
     volumes:
       - db_service_a_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U service_a -d registration_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db-service-b:
     image: postgres:16
@@ -32,6 +42,65 @@ services:
       POSTGRES_DB: medical_record_db
     volumes:
       - db_service_b_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U service_b -d medical_record_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  service-a:
+    build:
+      context: ../service-a
+    container_name: clinic-service-a
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../proto:/app/proto:ro
+    environment:
+      PORT: 8080
+      DB_HOST: db-service-a
+      DB_PORT: 5432
+      DB_NAME: registration_db
+      DB_USER: service_a
+      DB_PASS: service_a_pass
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_QUEUE: patient.registered
+      SERVICE_B_GRPC_ADDR: service-b:50051
+      PROTO_PATH: /app/proto/patient_record.proto
+      OUTBOX_POLL_MS: 2000
+    depends_on:
+      db-service-a:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  service-b:
+    build:
+      context: ../service-b
+    container_name: clinic-service-b
+    ports:
+      - "8081:8081"
+      - "50051:50051"
+    volumes:
+      - ../proto:/app/proto:ro
+    environment:
+      PORT: 8081
+      DB_HOST: db-service-b
+      DB_PORT: 5432
+      DB_NAME: medical_record_db
+      DB_USER: service_b
+      DB_PASS: service_b_pass
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_QUEUE: patient.registered
+      RABBITMQ_DLX: patient.registered.dlx
+      RABBITMQ_DLQ: patient.registered.dlq
+      GRPC_PORT: 50051
+      PROTO_PATH: /app/proto/patient_record.proto
+    depends_on:
+      db-service-b:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   db_service_a_data:

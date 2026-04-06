@@ -2,6 +2,7 @@ const path = require("path");
 require("dotenv").config();
 
 module.exports = {
+  port: Number(process.env.PORT || 8081),
   db: {
     host: process.env.DB_HOST || "localhost",
     port: Number(process.env.DB_PORT || 5434),
@@ -12,7 +13,8 @@ module.exports = {
   rabbit: {
     url: process.env.RABBITMQ_URL || "amqp://guest:guest@localhost:5672",
     queue: process.env.RABBITMQ_QUEUE || "patient.registered",
-    dlq: process.env.RABBITMQ_DLX || "patient.registered.dlq",
+    dlx: process.env.RABBITMQ_DLX || "patient.registered.dlx",
+    dlq: process.env.RABBITMQ_DLQ || "patient.registered.dlq",
   },
   grpc: {
     port: Number(process.env.GRPC_PORT || 50051),

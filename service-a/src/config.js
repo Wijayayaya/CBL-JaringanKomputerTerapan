@@ -12,7 +12,9 @@ module.exports = {
   },
   rabbit: {
     url: process.env.RABBITMQ_URL || "amqp://guest:guest@localhost:5672",
-    queue: process.env.RABBITMQ_QUEUE || "patient.registered"
+    queue: process.env.RABBITMQ_QUEUE || "patient.registered",
+    dlx: process.env.RABBITMQ_DLX || "patient.registered.dlx",
+    dlq: process.env.RABBITMQ_DLQ || "patient.registered.dlq"
   },
   grpc: {
     address: process.env.SERVICE_B_GRPC_ADDR || "localhost:50051",

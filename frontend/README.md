@@ -1,6 +1,10 @@
 # Frontend
 
-Frontend Vite sederhana untuk mengirim data pendaftaran pasien ke Service A.
+Frontend Vite untuk:
+
+- pendaftaran pasien ke Service A
+- melihat daftar pasien dari Service A
+- melihat daftar dan detail rekam medis dari Service B
 
 ## Menjalankan
 
@@ -12,5 +16,5 @@ Frontend Vite sederhana untuk mengirim data pendaftaran pasien ke Service A.
 
 ## Catatan
 
-- FE hanya mengakses Service A (`http://localhost:8080`).
-- FE tidak mengakses Service B secara langsung.
+- FE mengakses Service A (`http://localhost:8080`) dan Service B (`http://localhost:8081`).
+- Validasi realtime via gRPC sekarang selalu aktif otomatis saat registrasi (tanpa checkbox/toggle di UI).

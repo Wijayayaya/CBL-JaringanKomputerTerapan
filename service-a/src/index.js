@@ -6,6 +6,7 @@ const { pool, runMigrations } = require("./db");
 const { connectRabbit } = require("./rabbit");
 const { processOutboxOnce } = require("./outboxRelay");
 const { getPatientSummary } = require("./grpcClient");
+const patientRoutes = require("./patientRoutes");
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,8 @@ app.get("/health", async (_req, res) => {
     res.status(500).json({ status: "error", message: error.message });
   }
 });
+
+app.use("/patients", patientRoutes);
 
 app.post("/registrations", async (req, res) => {
   const { name, dateOfBirth, gender, visitDate, clinicCode, requireRealtimeValidation } = req.body;
@@ -90,6 +93,7 @@ app.post("/registrations", async (req, res) => {
     res.status(201).json({
       registrationId,
       patientId,
+      name,
       realtimeSummary,
       realtimeStatus,
       realtimeErrorDetail,
