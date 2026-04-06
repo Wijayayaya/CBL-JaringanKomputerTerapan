@@ -27,12 +27,13 @@ Starter project untuk arsitektur:
    - RabbitMQ untuk event-driven
 4. Kontrak gRPC wajib berasal dari file `.proto`.
 
-## Menjalankan Infrastruktur
+## Menjalankan (Rekomendasi: Docker Compose)
 
-Dari root project:
+Jalankan dari folder `infra`:
 
 ```bash
-docker compose -f infra/docker-compose.yml up -d
+cd "/mnt/storage/Source Code/CBL-JaringanKomputerTerapan/infra"
+docker compose up -d --build
 ```
 
 Service yang tersedia:
@@ -40,26 +41,40 @@ Service yang tersedia:
 - RabbitMQ UI: `http://localhost:15672` (guest/guest)
 - Postgres Service A: `localhost:5433`
 - Postgres Service B: `localhost:5434`
+- Service A HTTP: `http://localhost:8080`
+- Service B HTTP: `http://localhost:8081`
+- Service B gRPC: `localhost:50051`
 
-## Menjalankan Service B
+## Mode Lokal (Tanpa Container App)
+
+Jika mau menjalankan `npm run dev` untuk service-a/service-b, stop dulu container app agar tidak bentrok port:
+
+```bash
+cd "/mnt/storage/Source Code/CBL-JaringanKomputerTerapan/infra"
+docker compose stop service-a service-b
+```
+
+Lalu jalankan service lokal:
+
+## Menjalankan Service B (Lokal)
 
 ```bash
 cd service-b
-copy .env.example .env
+cp .env.example .env
 npm install
 npm run dev
 ```
 
-## Menjalankan Service A
+## Menjalankan Service A (Lokal)
 
 ```bash
 cd service-a
-copy .env.example .env
+cp .env.example .env
 npm install
 npm run dev
 ```
 
-## Menjalankan Frontend
+## Menjalankan Frontend (Lokal)
 
 ```bash
 cd frontend
@@ -75,4 +90,12 @@ npm run dev
 4. Service A menulis outbox event `patient.registered`.
 5. Outbox relay publish event ke RabbitMQ.
 6. Service B consume event dan membuat draft rekam medis di DB B.
-7. Jika opsi realtime aktif, Service A memanggil gRPC Service B.
+7. Service A selalu memanggil gRPC Service B untuk validasi realtime (otomatis, tanpa toggle di UI).
+
+## Operasional Cepat
+
+Lihat `cheatsheet.txt` di root project untuk perintah:
+
+- stop/up service satuan
+- stop/up batch
+- reset database (`docker compose down -v`)

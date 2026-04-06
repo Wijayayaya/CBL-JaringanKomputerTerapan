@@ -5,6 +5,7 @@ Service A menerima input dari FE, menyimpan data pasien+registrasi ke DB A, lalu
 ## Endpoint
 
 - `GET /health`
+- `GET /patients`
 - `POST /registrations`
 
 Contoh body `POST /registrations`:
@@ -31,4 +32,6 @@ Contoh body `POST /registrations`:
 ## Catatan Integrasi
 
 - gRPC client memanggil Service B pada `SERVICE_B_GRPC_ADDR`.
+- Validasi realtime via gRPC dijalankan otomatis saat registrasi (selalu aktif).
 - Event `patient.registered` disimpan dulu di tabel `outbox_events` sebelum dipublish ke RabbitMQ.
+- Service A juga menyiapkan queue topology RabbitMQ (queue + DLX + DLQ) saat koneksi, sehingga publish lebih andal saat startup.

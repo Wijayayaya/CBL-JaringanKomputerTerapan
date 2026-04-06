@@ -1,0 +1,52 @@
+CBL-JaringanKomputerTerapan Docker Compose Cheatsheet
+
+Jalankan semua perintah dari folder infra:
+cd "/mnt/storage/Source Code/CBL-JaringanKomputerTerapan/infra"
+
+STOP SATU SERVICE
+docker compose stop service-a
+docker compose stop service-b
+docker compose stop db-service-a
+docker compose stop db-service-b
+docker compose stop rabbitmq
+
+STOP BATCH
+docker compose stop service-a service-b
+docker compose stop db-service-a db-service-b rabbitmq
+docker compose stop
+
+DOWN SEMUA (hapus container + network, volume tetap)
+docker compose down
+
+UP SATU SERVICE
+docker compose up -d service-a
+docker compose up -d service-b
+docker compose up -d db-service-a
+docker compose up -d db-service-b
+docker compose up -d rabbitmq
+
+UP BATCH
+docker compose up -d service-a service-b
+docker compose up -d db-service-a db-service-b rabbitmq
+docker compose up -d
+
+UP BATCH + REBUILD IMAGE
+docker compose up -d --build
+docker compose up -d --build service-a service-b
+
+RESET DATABASE (hapus data Postgres)
+docker compose down -v
+docker compose up -d --build
+
+STATUS DAN LOG
+docker compose ps
+docker compose logs -f service-a
+docker compose logs -f service-b
+docker compose logs -f db-service-a
+docker compose logs -f db-service-b
+docker compose logs -f rabbitmq
+
+CATATAN PENTING
+- Jangan jalankan npm run dev service-a/service-b lokal bersamaan dengan container service-a/service-b karena bentrok port 8080, 8081, 50051.
+- Jika mau mode lokal, stop dulu container app:
+	docker compose stop service-a service-b
