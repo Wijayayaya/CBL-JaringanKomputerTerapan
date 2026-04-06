@@ -37,13 +37,18 @@ app.post("/registrations", async (req, res) => {
 
   const client = await pool.connect();
   try {
+    const shouldRealtimeValidate = requireRealtimeValidation !== false;
     let realtimeSummary = null;
-    if (requireRealtimeValidation) {
+    let realtimeStatus = shouldRealtimeValidate ? "pending" : "skipped";
+    let realtimeErrorDetail = null;
+
+    if (shouldRealtimeValidate) {
       try {
         realtimeSummary = await getPatientSummary(patientId);
+        realtimeStatus = "validated";
       } catch (grpcError) {
-        res.status(502).json({ message: "Realtime validation failed", detail: grpcError.message });
-        return;
+        realtimeStatus = "queued";
+        realtimeErrorDetail = grpcError.message;
       }
     }
 
@@ -57,7 +62,7 @@ app.post("/registrations", async (req, res) => {
     await client.query(
       `INSERT INTO registrations(id, patient_id, visit_date, clinic_code, requires_realtime_validation)
        VALUES ($1, $2, $3, $4, $5)`,
-      [registrationId, patientId, visitDate, clinicCode, Boolean(requireRealtimeValidation)]
+      [registrationId, patientId, visitDate, clinicCode, shouldRealtimeValidate]
     );
 
     const eventPayload = {
@@ -90,6 +95,8 @@ app.post("/registrations", async (req, res) => {
       patientId,
       name,
       realtimeSummary,
+      realtimeStatus,
+      realtimeErrorDetail,
       outboxStatus: "pending_publish"
     });
   } catch (error) {

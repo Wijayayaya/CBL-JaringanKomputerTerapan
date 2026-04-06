@@ -58,13 +58,22 @@
           </label>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary" id="reg-btn">Daftarkan Pasien</button>
+
+      <button type="submit" class="btn btn-primary" id="reg-btn">
+        Daftarkan Pasien
+      </button>
     </form>
+
     <div class="result-box" id="reg-result">
-      <div class="result-header success" id="reg-result-header">✓ Registrasi Berhasil</div>
+      <div class="result-header success" id="reg-result-header">
+        ✓ Registrasi Berhasil
+      </div>
       <div class="result-body" id="reg-result-body"></div>
     </div>
-    <button class="view-record-btn" id="view-record-btn">🏥 Lihat Rekam Medis Pasien Ini →</button>
+
+    <button class="view-record-btn" id="view-record-btn">
+      🏥 Lihat Rekam Medis Pasien Ini →
+    </button>
   </div>
 </div>
 
@@ -78,20 +87,30 @@
     <div class="count-badge" id="patient-count">memuat...</div>
     <button class="btn btn-refresh" onclick="loadPatients()">↻ Refresh</button>
   </div>
-  <div id="patients-container"><div class="loading"><div class="spinner"></div>Memuat data pasien...</div></div>
+  <div id="patients-container">
+    <div class="loading">
+      <div class="spinner"></div>
+      Memuat data pasien...
+    </div>
+  </div>
 </div>
 
 <!-- DAFTAR REKAM MEDIS -->
 <div class="page" id="page-records">
   <div class="page-header">
     <h1>Daftar Rekam Medis</h1>
-    <p>Rekam medis di Service B. Bandingkan jumlahnya dengan daftar pasien saat Service B dimatikan.</p>
+    <p>Rekam medis di Service B.</p>
   </div>
   <div class="toolbar">
     <div class="count-badge" id="record-count">memuat...</div>
     <button class="btn btn-refresh" onclick="loadRecords()">↻ Refresh</button>
   </div>
-  <div id="records-container"><div class="loading"><div class="spinner"></div>Memuat rekam medis...</div></div>
+  <div id="records-container">
+    <div class="loading">
+      <div class="spinner"></div>
+      Memuat rekam medis...
+    </div>
+  </div>
 </div>
 
 <!-- DETAIL REKAM MEDIS -->
@@ -102,12 +121,13 @@
   </div>
   <div class="search-row">
     <input id="pid-input" placeholder="Masukkan Patient ID (UUID)..." />
-    <button class="btn btn-primary" style="width:auto" onclick="fetchRecord()">Cari</button>
+    <button class="btn btn-primary" onclick="fetchRecord()">Cari</button>
   </div>
   <div id="record-container"></div>
 </div>
 
 <div class="toast" id="toast"></div>
 <script type="module" src="/src/main.js"></script>
+
 </body>
 </html>
