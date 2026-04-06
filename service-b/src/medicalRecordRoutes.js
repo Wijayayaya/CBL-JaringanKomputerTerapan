@@ -157,7 +157,7 @@ router.post("/:patientId/visits", async (req, res) => {
     await client.query(
       `UPDATE medical_records SET last_visit_at = $1, updated_at = NOW()
        WHERE patient_id = $2`,
-      [visitResult.rows[0].created_at, patientId],
+      [visitResult.rows[0].visit_date, patientId],
     );
     await client.query("COMMIT");
     res.status(201).json(visitResult.rows[0]);

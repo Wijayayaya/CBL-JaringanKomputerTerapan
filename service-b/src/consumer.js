@@ -24,7 +24,21 @@ async function processRegisteredEvent(payload) {
     const doctorNotes = visit.doctor_notes || null;
     const medicalNotes = medical.notes || null;
     const medicalDiagnosis = medical.diagnosis || null;
-    const allergies = Array.isArray(medical.allergies) ? medical.allergies.filter((item) => item?.code && item?.label) : [];
+    const allergies = Array.isArray(medical.allergies)
+      ? medical.allergies.reduce((items, item) => {
+          const code = item?.code != null ? String(item.code).trim() : "";
+          const label = item?.label != null ? String(item.label).trim() : "";
+          if (!code || !label) {
+            return items;
+          }
+          items.push({
+            code,
+            label,
+            is_critical: Boolean(item?.is_critical),
+          });
+          return items;
+        }, [])
+      : [];
 
     const exists = await client.query(`SELECT event_id FROM processed_events WHERE event_id = $1`, [eventId]);
 
@@ -59,7 +73,7 @@ async function processRegisteredEvent(payload) {
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (patient_id, code)
          DO UPDATE SET label = EXCLUDED.label, is_critical = EXCLUDED.is_critical`,
-        [patientId, String(allergy.code).trim(), String(allergy.label).trim(), Boolean(allergy.is_critical)],
+        [patientId, allergy.code, allergy.label, allergy.is_critical],
       );
     }
 

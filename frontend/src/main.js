@@ -484,7 +484,7 @@ async function fetchRecord(patientName) {
           <div class="record-form-grid">
             <div class="field">
               <label>Tanggal Kunjungan</label>
-              <input id="visit-date" type="date" value="${new Date().toISOString().slice(0, 10)}" />
+              <input id="visit-date" type="date" />
             </div>
             <div class="field">
               <label>Kode Klinik</label>
@@ -549,6 +549,7 @@ async function submitMedicalDetail(event) {
     return;
   }
 
+  const completedSteps = [];
   try {
     const patchRes = await fetch(`${SERVICE_B}/medical-records/${patientId}`, {
       method: "PATCH",
@@ -559,6 +560,7 @@ async function submitMedicalDetail(event) {
     if (!patchRes.ok) {
       throw new Error(patchData.message || "Gagal menyimpan catatan");
     }
+    completedSteps.push("catatan");
 
     if (allergyCode && allergyLabel) {
       const allergyRes = await fetch(`${SERVICE_B}/medical-records/${patientId}/allergies`, {
@@ -570,6 +572,7 @@ async function submitMedicalDetail(event) {
       if (!allergyRes.ok) {
         throw new Error(allergyData.message || "Gagal menambah alergi");
       }
+      completedSteps.push("alergi");
     }
 
     if (visitDate && clinicCode) {
@@ -587,12 +590,40 @@ async function submitMedicalDetail(event) {
       if (!visitRes.ok) {
         throw new Error(visitData.message || "Gagal menambah kunjungan");
       }
+      completedSteps.push("kunjungan");
     }
 
     showToast("Perubahan rekam medis berhasil disimpan", "success");
     await fetchRecord();
   } catch (err) {
+    if (completedSteps.length > 0) {
+      showToast(`Sebagian tersimpan (${completedSteps.join(", ")}), gagal di langkah berikutnya: ${err.message || "unknown"}`, "error");
+      return;
+    }
     showToast(err.message || "Gagal menyimpan perubahan", "error");
+  }
+}
+
+async function deleteAllergy(allergyId) {
+  const patientId = getCurrentPatientId();
+  if (!patientId || !allergyId) {
+    showToast("Data alergi tidak valid", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${SERVICE_B}/medical-records/${patientId}/allergies/${allergyId}`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Gagal menghapus alergi");
+    }
+
+    showToast("Alergi dihapus", "success");
+    await fetchRecord();
+  } catch (err) {
+    showToast(err.message || "Gagal menghapus alergi", "error");
   }
 }
 

@@ -38,13 +38,19 @@ app.post("/registrations", async (req, res) => {
     diagnosis: medical?.diagnosis ? String(medical.diagnosis).trim() : null,
     notes: medical?.notes ? String(medical.notes).trim() : null,
     allergies: Array.isArray(medical?.allergies)
-      ? medical.allergies
-          .filter((item) => item?.code && item?.label)
-          .map((item) => ({
-            code: String(item.code).trim(),
-            label: String(item.label).trim(),
-            is_critical: Boolean(item.is_critical),
-          }))
+      ? medical.allergies.reduce((items, item) => {
+          const code = item?.code != null ? String(item.code).trim() : "";
+          const label = item?.label != null ? String(item.label).trim() : "";
+          if (!code || !label) {
+            return items;
+          }
+          items.push({
+            code,
+            label,
+            is_critical: Boolean(item?.is_critical),
+          });
+          return items;
+        }, [])
       : [],
     visit: {
       visit_date: medical?.visit?.visit_date || visitDate,
