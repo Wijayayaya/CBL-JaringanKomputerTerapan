@@ -24,7 +24,7 @@ app.get("/health", async (_req, res) => {
 app.use("/patients", patientRoutes);
 
 app.post("/registrations", async (req, res) => {
-  const { name, dateOfBirth, gender, visitDate, clinicCode, requireRealtimeValidation } = req.body;
+  const { name, dateOfBirth, gender, visitDate, clinicCode, requireRealtimeValidation, medical } = req.body;
 
   if (!name || !dateOfBirth || !gender || !visitDate || !clinicCode) {
     res.status(400).json({ message: "Missing required fields" });
@@ -34,6 +34,31 @@ app.post("/registrations", async (req, res) => {
   const patientId = uuidv4();
   const registrationId = uuidv4();
   const eventId = uuidv4();
+  const normalizedMedical = {
+    diagnosis: medical?.diagnosis ? String(medical.diagnosis).trim() : null,
+    notes: medical?.notes ? String(medical.notes).trim() : null,
+    allergies: Array.isArray(medical?.allergies)
+      ? medical.allergies.reduce((items, item) => {
+          const code = item?.code != null ? String(item.code).trim() : "";
+          const label = item?.label != null ? String(item.label).trim() : "";
+          if (!code || !label) {
+            return items;
+          }
+          items.push({
+            code,
+            label,
+            is_critical: Boolean(item?.is_critical),
+          });
+          return items;
+        }, [])
+      : [],
+    visit: {
+      visit_date: medical?.visit?.visit_date || visitDate,
+      clinic_code: medical?.visit?.clinic_code || clinicCode,
+      diagnosis: medical?.visit?.diagnosis ? String(medical.visit.diagnosis).trim() : null,
+      doctor_notes: medical?.visit?.doctor_notes ? String(medical.visit.doctor_notes).trim() : null,
+    },
+  };
 
   const client = await pool.connect();
   try {
@@ -56,13 +81,13 @@ app.post("/registrations", async (req, res) => {
     await client.query(
       `INSERT INTO patients(id, name, date_of_birth, gender)
        VALUES ($1, $2, $3, $4)`,
-      [patientId, name, dateOfBirth, gender]
+      [patientId, name, dateOfBirth, gender],
     );
 
     await client.query(
       `INSERT INTO registrations(id, patient_id, visit_date, clinic_code, requires_realtime_validation)
        VALUES ($1, $2, $3, $4, $5)`,
-      [registrationId, patientId, visitDate, clinicCode, shouldRealtimeValidate]
+      [registrationId, patientId, visitDate, clinicCode, shouldRealtimeValidate],
     );
 
     const eventPayload = {
@@ -73,19 +98,20 @@ app.post("/registrations", async (req, res) => {
         patient_id: patientId,
         name,
         date_of_birth: dateOfBirth,
-        gender
+        gender,
       },
       registration: {
         registration_id: registrationId,
         visit_date: visitDate,
-        clinic_code: clinicCode
-      }
+        clinic_code: clinicCode,
+      },
+      medical: normalizedMedical,
     };
 
     await client.query(
       `INSERT INTO outbox_events(id, event_type, payload, status)
        VALUES ($1, $2, $3::jsonb, 'pending')`,
-      [eventId, "patient.registered", JSON.stringify(eventPayload)]
+      [eventId, "patient.registered", JSON.stringify(eventPayload)],
     );
 
     await client.query("COMMIT");
@@ -97,7 +123,7 @@ app.post("/registrations", async (req, res) => {
       realtimeSummary,
       realtimeStatus,
       realtimeErrorDetail,
-      outboxStatus: "pending_publish"
+      outboxStatus: "pending_publish",
     });
   } catch (error) {
     await client.query("ROLLBACK");

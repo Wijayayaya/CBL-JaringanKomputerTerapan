@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS medical_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id UUID NOT NULL UNIQUE,
   patient_name TEXT,
-  status TEXT NOT NULL DEFAULT 'draft',
   notes TEXT,
   diagnosis TEXT,
   last_visit_at TIMESTAMPTZ NULL,
@@ -15,6 +14,7 @@ CREATE TABLE IF NOT EXISTS medical_records (
 ALTER TABLE medical_records ADD COLUMN IF NOT EXISTS patient_name TEXT;
 ALTER TABLE medical_records ADD COLUMN IF NOT EXISTS notes TEXT;
 ALTER TABLE medical_records ADD COLUMN IF NOT EXISTS diagnosis TEXT;
+ALTER TABLE medical_records DROP COLUMN IF EXISTS status;
 
 CREATE TABLE IF NOT EXISTS allergies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

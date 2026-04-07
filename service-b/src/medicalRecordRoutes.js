@@ -12,9 +12,9 @@ function isUuid(value) {
 router.get("/", async (_req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, patient_id, patient_name, status, notes, diagnosis, last_visit_at, created_at, updated_at
+      `SELECT id, patient_id, patient_name, notes, diagnosis, last_visit_at, created_at, updated_at
        FROM medical_records
-       ORDER BY created_at DESC`
+       ORDER BY created_at DESC`,
     );
     res.json({ total: rows.length, records: rows });
   } catch (error) {
@@ -31,9 +31,9 @@ router.get("/:patientId", async (req, res) => {
 
   try {
     const recordRes = await pool.query(
-      `SELECT id, patient_id, patient_name, status, notes, diagnosis, last_visit_at, created_at, updated_at
+      `SELECT id, patient_id, patient_name, notes, diagnosis, last_visit_at, created_at, updated_at
        FROM medical_records WHERE patient_id = $1`,
-      [patientId]
+      [patientId],
     );
 
     if (recordRes.rows.length === 0) {
@@ -46,14 +46,14 @@ router.get("/:patientId", async (req, res) => {
       `SELECT id, code, label, is_critical, created_at
        FROM allergies WHERE patient_id = $1
        ORDER BY is_critical DESC, created_at ASC`,
-      [patientId]
+      [patientId],
     );
 
     const visitRes = await pool.query(
       `SELECT id, visit_date, clinic_code, doctor_notes, diagnosis, created_at
        FROM visit_history WHERE patient_id = $1
        ORDER BY visit_date DESC`,
-      [patientId]
+      [patientId],
     );
 
     res.json({ ...record, allergies: allergyRes.rows, visit_history: visitRes.rows });
@@ -69,20 +69,15 @@ router.patch("/:patientId", async (req, res) => {
     return res.status(400).json({ message: "Invalid patientId format" });
   }
 
-  const { notes, diagnosis, status } = req.body;
-
-  const allowedStatus = ["draft", "active", "archived"];
-  if (status && !allowedStatus.includes(status)) {
-    return res.status(400).json({ message: `Status must be one of: ${allowedStatus.join(", ")}` });
-  }
+  const { notes, diagnosis } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE medical_records
-       SET notes = COALESCE($1, notes), diagnosis = COALESCE($2, diagnosis),
-           status = COALESCE($3, status), updated_at = NOW()
-       WHERE patient_id = $4 RETURNING *`,
-      [notes ?? null, diagnosis ?? null, status ?? null, patientId]
+         SET notes = COALESCE($1, notes), diagnosis = COALESCE($2, diagnosis),
+             updated_at = NOW()
+         WHERE patient_id = $3 RETURNING *`,
+      [notes ?? null, diagnosis ?? null, patientId],
     );
     if (result.rows.length === 0) return res.status(404).json({ message: "Medical record not found" });
     res.json(result.rows[0]);
@@ -107,7 +102,7 @@ router.post("/:patientId/allergies", async (req, res) => {
        ON CONFLICT (patient_id, code)
        DO UPDATE SET label = EXCLUDED.label, is_critical = EXCLUDED.is_critical
        RETURNING *`,
-      [patientId, code, label, Boolean(is_critical)]
+      [patientId, code, label, Boolean(is_critical)],
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -126,10 +121,7 @@ router.delete("/:patientId/allergies/:allergyId", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      `DELETE FROM allergies WHERE id = $1 AND patient_id = $2 RETURNING id`,
-      [allergyId, patientId]
-    );
+    const result = await pool.query(`DELETE FROM allergies WHERE id = $1 AND patient_id = $2 RETURNING id`, [allergyId, patientId]);
     if (result.rows.length === 0) return res.status(404).json({ message: "Allergy not found" });
     res.json({ message: "Allergy deleted" });
   } catch (error) {
@@ -151,10 +143,7 @@ router.post("/:patientId/visits", async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    const existingMedicalRecord = await client.query(
-      `SELECT patient_id FROM medical_records WHERE patient_id = $1 FOR UPDATE`,
-      [patientId]
-    );
+    const existingMedicalRecord = await client.query(`SELECT patient_id FROM medical_records WHERE patient_id = $1 FOR UPDATE`, [patientId]);
     if (existingMedicalRecord.rows.length === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({ message: "Medical record not found" });
@@ -163,12 +152,12 @@ router.post("/:patientId/visits", async (req, res) => {
     const visitResult = await client.query(
       `INSERT INTO visit_history (patient_id, visit_date, clinic_code, doctor_notes, diagnosis)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [patientId, visit_date, clinic_code, doctor_notes ?? null, diagnosis ?? null]
+      [patientId, visit_date, clinic_code, doctor_notes ?? null, diagnosis ?? null],
     );
     await client.query(
-      `UPDATE medical_records SET last_visit_at = $1, status = 'active', updated_at = NOW()
+      `UPDATE medical_records SET last_visit_at = $1, updated_at = NOW()
        WHERE patient_id = $2`,
-      [visitResult.rows[0].created_at, patientId]
+      [visitResult.rows[0].visit_date, patientId],
     );
     await client.query("COMMIT");
     res.status(201).json(visitResult.rows[0]);
