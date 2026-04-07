@@ -52,7 +52,11 @@ async function processRegisteredEvent(payload) {
        VALUES ($1, $2, $3, $4, COALESCE($5::timestamptz, NOW()), NOW())
        ON CONFLICT (patient_id)
        DO UPDATE SET updated_at = NOW(),
-                     last_visit_at = COALESCE($5::timestamptz, medical_records.last_visit_at),
+                     last_visit_at = COALESCE(
+                       GREATEST(medical_records.last_visit_at, $5::timestamptz),
+                       medical_records.last_visit_at,
+                       $5::timestamptz
+                     ),
                      patient_name = COALESCE($2, medical_records.patient_name),
                      notes = COALESCE($3, medical_records.notes),
                      diagnosis = COALESCE($4, medical_records.diagnosis)`,
